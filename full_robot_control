@@ -1,0 +1,164 @@
+import time
+import board
+import busio
+import serial
+from adafruit_pca9685 import PCA9685
+import RPi.GPIO as GPIO
+
+# -------------------------------------------------
+# GPIO SETUP FOR MOTOR DRIVER (L298N OR L293D)
+# -------------------------------------------------
+GPIO.setmode(GPIO.BCM)
+
+# Motor A (Left Motor)
+IN1 = 17
+IN2 = 27
+ENA = 22
+
+# Motor B (Right Motor)
+IN3 = 23
+IN4 = 24
+ENB = 25
+
+GPIO.setup(IN1, GPIO.OUT)
+GPIO.setup(IN2, GPIO.OUT)
+GPIO.setup(ENA, GPIO.OUT)
+
+GPIO.setup(IN3, GPIO.OUT)
+GPIO.setup(IN4, GPIO.OUT)
+GPIO.setup(ENB, GPIO.OUT)
+
+pwmA = GPIO.PWM(ENA, 1000)
+pwmB = GPIO.PWM(ENB, 1000)
+
+pwmA.start(0)
+pwmB.start(0)
+
+# -------------------------------------------------
+# PCA9685 SETUP FOR ARM SERVOS
+# -------------------------------------------------
+i2c = busio.I2C(board.SCL, board.SDA)
+pca = PCA9685(i2c)
+pca.frequency = 50
+
+# Servo channels (change as per your connection)
+BASE = 0
+SHOULDER = 1
+ELBOW = 2
+WRIST = 3
+GRIPPER = 4
+
+def set_angle(channel, angle):
+    pulse = int((angle / 180) * 4000 + 1000)
+    pca.channels[channel].duty_cycle = pulse
+
+# -------------------------------------------------
+# BLUETOOTH SETUP
+# -------------------------------------------------
+# Make sure HC-05 is paired and connected on /dev/rfcomm0
+bt = serial.Serial("/dev/rfcomm0", 9600, timeout=1)
+
+# -------------------------------------------------
+# MOTOR MOVEMENT FUNCTIONS
+# -------------------------------------------------
+def forward():
+    GPIO.output(IN1, True)
+    GPIO.output(IN2, False)
+    GPIO.output(IN3, True)
+    GPIO.output(IN4, False)
+    pwmA.ChangeDutyCycle(70)
+    pwmB.ChangeDutyCycle(70)
+
+def backward():
+    GPIO.output(IN1, False)
+    GPIO.output(IN2, True)
+    GPIO.output(IN3, False)
+    GPIO.output(IN4, True)
+    pwmA.ChangeDutyCycle(70)
+    pwmB.ChangeDutyCycle(70)
+
+def left():
+    GPIO.output(IN1, False)
+    GPIO.output(IN2, True)
+    GPIO.output(IN3, True)
+    GPIO.output(IN4, False)
+    pwmA.ChangeDutyCycle(60)
+    pwmB.ChangeDutyCycle(60)
+
+def right():
+    GPIO.output(IN1, True)
+    GPIO.output(IN2, False)
+    GPIO.output(IN3, False)
+    GPIO.output(IN4, True)
+    pwmA.ChangeDutyCycle(60)
+    pwmB.ChangeDutyCycle(60)
+
+def stop():
+    GPIO.output(IN1, False)
+    GPIO.output(IN2, False)
+    GPIO.output(IN3, False)
+    GPIO.output(IN4, False)
+    pwmA.ChangeDutyCycle(0)
+    pwmB.ChangeDutyCycle(0)
+
+# -------------------------------------------------
+# ARM SERVO PRESETS
+# -------------------------------------------------
+# You can tune these angles as per your robot arm
+angles = {
+    "b+": (BASE, 10),
+    "b-": (BASE, -10),
+
+    "s+": (SHOULDER, 10),
+    "s-": (SHOULDER, -10),
+
+    "e+": (ELBOW, 10),
+    "e-": (ELBOW, -10),
+
+    "w+": (WRIST, 10),
+    "w-": (WRIST, -10),
+
+    "g+": (GRIPPER, 10),
+    "g-": (GRIPPER, -10),
+}
+
+current_angle = {BASE: 90, SHOULDER: 90, ELBOW: 90, WRIST: 90, GRIPPER: 90}
+
+def move_servo(cmd):
+    if cmd in angles:
+        ch, change = angles[cmd]
+        new_angle = current_angle[ch] + change
+        new_angle = max(0, min(180, new_angle))
+        current_angle[ch] = new_angle
+        set_angle(ch, new_angle)
+        print("Moving", ch, "to", new_angle)
+
+# -------------------------------------------------
+# MAIN LOOP
+# -------------------------------------------------
+print("Robot Ready... Listening for Bluetooth commands")
+
+try:
+    while True:
+        if bt.in_waiting > 0:
+            cmd = bt.readline().decode().strip()
+            print("CMD:", cmd)
+
+            # CAR COMMANDS
+            if cmd == "F": forward()
+            elif cmd == "B": backward()
+            elif cmd == "L": left()
+            elif cmd == "R": right()
+            elif cmd == "S": stop()
+
+            # ARM COMMANDS
+            else:
+                move_servo(cmd)
+
+        time.sleep(0.01)
+
+except KeyboardInterrupt:
+    pca.deinit()
+    GPIO.cleanup()
+    bt.close()
+    print("Stopped.")
