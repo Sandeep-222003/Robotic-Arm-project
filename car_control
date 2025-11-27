@@ -1,0 +1,95 @@
+import lgpio
+import time
+import serial
+
+# -------------------------------------------------
+# GPIO SETUP (using lgpio for Raspberry Pi OS Bookworm)
+# -------------------------------------------------
+chip = lgpio.gpiochip_open(0)
+
+# Motor driver pins (L298N)
+IN1 = 17   # GPIO17
+IN2 = 27   # GPIO27
+ENA = 22   # GPIO22
+
+IN3 = 23   # GPIO23
+IN4 = 24   # GPIO24
+ENB = 25   # GPIO25
+
+motor_pins = [IN1, IN2, IN3, IN4, ENA, ENB]
+
+for pin in motor_pins:
+    lgpio.gpio_claim_output(chip, pin)
+
+# -------------------------------------------------
+# MOTOR CONTROL FUNCTIONS
+# -------------------------------------------------
+def forward():
+    lgpio.gpio_write(chip, IN1, 1)
+    lgpio.gpio_write(chip, IN2, 0)
+    lgpio.gpio_write(chip, IN3, 1)
+    lgpio.gpio_write(chip, IN4, 0)
+    lgpio.gpio_write(chip, ENA, 1)
+    lgpio.gpio_write(chip, ENB, 1)
+
+def backward():
+    lgpio.gpio_write(chip, IN1, 0)
+    lgpio.gpio_write(chip, IN2, 1)
+    lgpio.gpio_write(chip, IN3, 0)
+    lgpio.gpio_write(chip, IN4, 1)
+    lgpio.gpio_write(chip, ENA, 1)
+    lgpio.gpio_write(chip, ENB, 1)
+
+def left():
+    lgpio.gpio_write(chip, IN1, 0)
+    lgpio.gpio_write(chip, IN2, 1)
+    lgpio.gpio_write(chip, IN3, 1)
+    lgpio.gpio_write(chip, IN4, 0)
+    lgpio.gpio_write(chip, ENA, 1)
+    lgpio.gpio_write(chip, ENB, 1)
+
+def right():
+    lgpio.gpio_write(chip, IN1, 1)
+    lgpio.gpio_write(chip, IN2, 0)
+    lgpio.gpio_write(chip, IN3, 0)
+    lgpio.gpio_write(chip, IN4, 1)
+    lgpio.gpio_write(chip, ENA, 1)
+    lgpio.gpio_write(chip, ENB, 1)
+
+def stop():
+    lgpio.gpio_write(chip, IN1, 0)
+    lgpio.gpio_write(chip, IN2, 0)
+    lgpio.gpio_write(chip, IN3, 0)
+    lgpio.gpio_write(chip, IN4, 0)
+    lgpio.gpio_write(chip, ENA, 0)
+    lgpio.gpio_write(chip, ENB, 0)
+
+# -------------------------------------------------
+# BLUETOOTH SETUP (/dev/rfcomm0)
+# -------------------------------------------------
+bt = serial.Serial("/dev/rfcomm0", 9600, timeout=1)
+
+print("Car Ready! Waiting for Bluetooth commands...")
+
+# -------------------------------------------------
+# MAIN LOOP
+# -------------------------------------------------
+try:
+    while True:
+        if bt.in_waiting:
+            cmd = bt.readline().decode().strip()
+            print("Received:", cmd)
+
+            if cmd == "F": forward()
+            elif cmd == "B": backward()
+            elif cmd == "L": left()
+            elif cmd == "R": right()
+            elif cmd == "S": stop()
+
+        time.sleep(0.01)
+
+except KeyboardInterrupt:
+    stop()
+    lgpio.gpiochip_close(chip)
+    bt.close()
+    print("Stopped.")
