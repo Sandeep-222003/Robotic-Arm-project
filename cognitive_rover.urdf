@@ -1,97 +1,140 @@
 <?xml version="1.0" ?>
-<robot name="cyberpunk_base">
+<robot name="cyberpunk_4wd_base">
 
   <!-- ================= MATERIALS ================= -->
-  <material name="matte_black">  <color rgba="0.1 0.1 0.12 1.0"/> </material>
+  <material name="matte_black">  <color rgba="0.12 0.12 0.14 1.0"/> </material>
   <material name="neon_cyan">    <color rgba="0.0 1.0 0.8 1.0"/>  </material>
   <material name="power_red">    <color rgba="0.8 0.1 0.1 1.0"/>  </material>
   <material name="pcb_green">    <color rgba="0.1 0.4 0.2 1.0"/>  </material>
+  <material name="heatsink_silver"><color rgba="0.7 0.7 0.75 1.0"/> </material>
   <material name="rubber_dark">  <color rgba="0.05 0.05 0.05 1.0"/> </material>
 
-  <!-- ================= LOWER DECK (POWER & DRIVE) ================= -->
-  <link name="lower_deck">
+  <!-- ================= UNIBODY CHASSIS ================= -->
+  <link name="base_chassis">
     <visual>
-      <geometry>
-        <!-- Chamfered representation using a core box, 260x180x10mm -->
-        <box size="0.26 0.18 0.01"/>
-      </geometry>
+      <!-- Wider and longer single plate: 280mm x 200mm x 6mm -->
+      <geometry> <box size="0.28 0.20 0.006"/> </geometry>
       <material name="matte_black"/>
     </visual>
   </link>
 
-  <!-- Battery Cradle Proxy (Center Mass) -->
-  <joint name="battery_joint" type="fixed">
-    <parent link="lower_deck"/>
-    <child link="battery"/>
-    <origin xyz="-0.02 0 0.015" rpy="0 0 0"/>
-  </joint>
-  <link name="battery">
-    <visual>
-      <geometry> <box size="0.11 0.04 0.025"/> </geometry>
-      <material name="power_red"/>
-    </visual>
-  </link>
-
-  <!-- ================= WHEELS ================= -->
-  <!-- Left Wheel -->
-  <joint name="left_wheel_joint" type="continuous">
-    <parent link="lower_deck"/>
-    <child link="left_wheel"/>
-    <origin xyz="-0.05 0.105 0" rpy="1.5708 0 0"/>
+  <!-- ================= 4-WHEEL DRIVE SYSTEM ================= -->
+  <!-- Front Left -->
+  <joint name="fl_wheel_joint" type="continuous">
+    <parent link="base_chassis"/>
+    <child link="fl_wheel"/>
+    <origin xyz="0.09 0.115 -0.015" rpy="1.5708 0 0"/>
     <axis xyz="0 0 1"/>
   </joint>
-  <link name="left_wheel">
+  <link name="fl_wheel">
     <visual>
       <geometry> <cylinder radius="0.0325" length="0.026"/> </geometry>
       <material name="rubber_dark"/>
     </visual>
   </link>
 
-  <!-- Right Wheel -->
-  <joint name="right_wheel_joint" type="continuous">
-    <parent link="lower_deck"/>
-    <child link="right_wheel"/>
-    <origin xyz="-0.05 -0.105 0" rpy="1.5708 0 0"/>
+  <!-- Rear Left -->
+  <joint name="rl_wheel_joint" type="continuous">
+    <parent link="base_chassis"/>
+    <child link="rl_wheel"/>
+    <origin xyz="-0.09 0.115 -0.015" rpy="1.5708 0 0"/>
     <axis xyz="0 0 1"/>
   </joint>
-  <link name="right_wheel">
+  <link name="rl_wheel">
     <visual>
       <geometry> <cylinder radius="0.0325" length="0.026"/> </geometry>
       <material name="rubber_dark"/>
     </visual>
   </link>
 
-  <!-- Front Caster Wheel (Stability) -->
-  <joint name="caster_joint" type="fixed">
-    <parent link="lower_deck"/>
-    <child link="caster_wheel"/>
-    <origin xyz="0.10 0 -0.015" rpy="0 0 0"/>
+  <!-- Front Right -->
+  <joint name="fr_wheel_joint" type="continuous">
+    <parent link="base_chassis"/>
+    <child link="fr_wheel"/>
+    <origin xyz="0.09 -0.115 -0.015" rpy="1.5708 0 0"/>
+    <axis xyz="0 0 1"/>
   </joint>
-  <link name="caster_wheel">
+  <link name="fr_wheel">
     <visual>
-      <geometry> <sphere radius="0.015"/> </geometry>
+      <geometry> <cylinder radius="0.0325" length="0.026"/> </geometry>
+      <material name="rubber_dark"/>
+    </visual>
+  </link>
+
+  <!-- Rear Right -->
+  <joint name="rr_wheel_joint" type="continuous">
+    <parent link="base_chassis"/>
+    <child link="rr_wheel"/>
+    <origin xyz="-0.09 -0.115 -0.015" rpy="1.5708 0 0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+  <link name="rr_wheel">
+    <visual>
+      <geometry> <cylinder radius="0.0325" length="0.026"/> </geometry>
+      <material name="rubber_dark"/>
+    </visual>
+  </link>
+
+  <!-- ================= ROBOTIC ARM MOUNTING PAD ================= -->
+  <!-- Placed front-center for maximum reach and stability -->
+  <joint name="arm_mount_joint" type="fixed">
+    <parent link="base_chassis"/>
+    <child link="arm_mount_pad"/>
+    <origin xyz="0.09 0 0.005" rpy="0 0 0"/> 
+  </joint>
+  <link name="arm_mount_pad">
+    <visual>
+      <!-- Circular reinforcement ring for the Ch0 Base Swivel -->
+      <geometry> <cylinder radius="0.04" length="0.005"/> </geometry>
       <material name="neon_cyan"/>
     </visual>
   </link>
 
-  <!-- ================= UPPER DECK (NEURAL LOGIC) ================= -->
-  <joint name="deck_spacer" type="fixed">
-    <parent link="lower_deck"/>
-    <child link="upper_deck"/>
-    <origin xyz="0 0 0.04" rpy="0 0 0"/> <!-- 40mm gap for wiring and battery -->
+  <!-- ================= ELECTRONICS LAYOUT ================= -->
+  <!-- Left Motor Driver (Controls Front/Rear Left Wheels) -->
+  <joint name="driver1_joint" type="fixed">
+    <parent link="base_chassis"/>
+    <child link="motor_driver_left"/>
+    <origin xyz="0 0.07 0.015" rpy="0 0 0"/>
   </joint>
-  <link name="upper_deck">
+  <link name="motor_driver_left">
     <visual>
-      <geometry> <box size="0.26 0.18 0.005"/> </geometry>
-      <material name="matte_black"/>
+      <geometry> <box size="0.045 0.045 0.02"/> </geometry>
+      <material name="heatsink_silver"/>
     </visual>
   </link>
 
-  <!-- Raspberry Pi 5 Proxy -->
+  <!-- Right Motor Driver (Controls Front/Rear Right Wheels) -->
+  <joint name="driver2_joint" type="fixed">
+    <parent link="base_chassis"/>
+    <child link="motor_driver_right"/>
+    <origin xyz="0 -0.07 0.015" rpy="0 0 0"/>
+  </joint>
+  <link name="motor_driver_right">
+    <visual>
+      <geometry> <box size="0.045 0.045 0.02"/> </geometry>
+      <material name="heatsink_silver"/>
+    </visual>
+  </link>
+
+  <!-- Battery & Buck Converter (Dead Center) -->
+  <joint name="battery_joint" type="fixed">
+    <parent link="base_chassis"/>
+    <child link="battery_pack"/>
+    <origin xyz="-0.02 0 0.015" rpy="0 0 0"/>
+  </joint>
+  <link name="battery_pack">
+    <visual>
+      <geometry> <box size="0.10 0.035 0.025"/> </geometry>
+      <material name="power_red"/>
+    </visual>
+  </link>
+
+  <!-- Raspberry Pi 5 (Rear Left) -->
   <joint name="rpi_joint" type="fixed">
-    <parent link="upper_deck"/>
+    <parent link="base_chassis"/>
     <child link="raspberry_pi"/>
-    <origin xyz="-0.06 -0.045 0.01" rpy="0 0 0"/>
+    <origin xyz="-0.10 0.06 0.01" rpy="0 0 0"/>
   </joint>
   <link name="raspberry_pi">
     <visual>
@@ -100,56 +143,43 @@
     </visual>
   </link>
 
-  <!-- ESP32 NodeMCU Proxy -->
-  <joint name="esp_joint" type="fixed">
-    <parent link="upper_deck"/>
-    <child link="esp32"/>
-    <origin xyz="-0.08 0.04 0.01" rpy="0 0 0"/>
+  <!-- ESP32 & PCA9685 Cluster (Rear Right) -->
+  <joint name="esp_pca_joint" type="fixed">
+    <parent link="base_chassis"/>
+    <child link="microcontroller_cluster"/>
+    <origin xyz="-0.10 -0.06 0.01" rpy="0 0 0"/>
   </joint>
-  <link name="esp32">
+  <link name="microcontroller_cluster">
     <visual>
-      <geometry> <box size="0.052 0.028 0.01"/> </geometry>
+      <geometry> <box size="0.06 0.05 0.01"/> </geometry>
       <material name="matte_black"/>
     </visual>
   </link>
 
-  <!-- PCA9685 Servo Driver Proxy -->
-  <joint name="pca_joint" type="fixed">
-    <parent link="upper_deck"/>
-    <child link="pca9685"/>
-    <origin xyz="0.02 0 0.01" rpy="0 0 0"/>
+  <!-- ================= FRONT SENSORS ================= -->
+  <!-- Ultrasonic & Camera Bracket -->
+  <joint name="sensor_bracket_joint" type="fixed">
+    <parent link="base_chassis"/>
+    <child link="sensor_array"/>
+    <origin xyz="0.14 0 0.01" rpy="0 0 0"/>
   </joint>
-  <link name="pca9685">
+  <link name="sensor_array">
     <visual>
-      <geometry> <box size="0.062 0.025 0.01"/> </geometry>
+      <geometry> <box size="0.01 0.06 0.03"/> </geometry>
       <material name="neon_cyan"/>
     </visual>
   </link>
 
-  <!-- ================= SENSORY ARRAY (FRONT) ================= -->
-  <!-- Ultrasonic Radar Mount -->
-  <joint name="sonar_joint" type="fixed">
-    <parent link="lower_deck"/>
-    <child link="ultrasonic"/>
-    <origin xyz="0.13 0 0.02" rpy="0 0 0"/>
+  <!-- ================= REAR UI (SWITCHES) ================= -->
+  <joint name="ui_panel_joint" type="fixed">
+    <parent link="base_chassis"/>
+    <child link="rear_ui_panel"/>
+    <origin xyz="-0.14 0 0.005" rpy="0 0 0"/>
   </joint>
-  <link name="ultrasonic">
+  <link name="rear_ui_panel">
     <visual>
-      <geometry> <box size="0.01 0.045 0.02"/> </geometry>
-      <material name="neon_cyan"/>
-    </visual>
-  </link>
-
-  <!-- Pi Camera Tilted Mount -->
-  <joint name="camera_joint" type="fixed">
-    <parent link="upper_deck"/>
-    <child link="pi_camera"/>
-    <origin xyz="0.12 0 0.025" rpy="0 0.261 0"/> <!-- Tilted down ~15 degrees -->
-  </joint>
-  <link name="pi_camera">
-    <visual>
-      <geometry> <box size="0.01 0.025 0.025"/> </geometry>
-      <material name="matte_black"/>
+      <geometry> <box size="0.01 0.08 0.01"/> </geometry>
+      <material name="power_red"/>
     </visual>
   </link>
 
