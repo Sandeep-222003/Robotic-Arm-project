@@ -1,152 +1,156 @@
 <?xml version="1.0" ?>
-<robot name="cognitive_rover_arm">
+<robot name="cyberpunk_base">
 
   <!-- ================= MATERIALS ================= -->
-  <material name="chassis_grey">
-    <color rgba="0.2 0.2 0.25 1.0"/>
-  </material>
-  <material name="arm_cyan">
-    <color rgba="0.0 1.0 0.8 1.0"/>
-  </material>
-  <material name="wheel_black">
-    <color rgba="0.05 0.05 0.05 1.0"/>
-  </material>
+  <material name="matte_black">  <color rgba="0.1 0.1 0.12 1.0"/> </material>
+  <material name="neon_cyan">    <color rgba="0.0 1.0 0.8 1.0"/>  </material>
+  <material name="power_red">    <color rgba="0.8 0.1 0.1 1.0"/>  </material>
+  <material name="pcb_green">    <color rgba="0.1 0.4 0.2 1.0"/>  </material>
+  <material name="rubber_dark">  <color rgba="0.05 0.05 0.05 1.0"/> </material>
 
-  <!-- ================= MOBILE BASE ================= -->
-  <!-- Main Chassis (260mm x 180mm x 70mm, 1.35 kg) -->
-  <link name="base_chassis">
+  <!-- ================= LOWER DECK (POWER & DRIVE) ================= -->
+  <link name="lower_deck">
     <visual>
       <geometry>
-        <box size="0.26 0.18 0.07"/>
+        <!-- Chamfered representation using a core box, 260x180x10mm -->
+        <box size="0.26 0.18 0.01"/>
       </geometry>
-      <material name="chassis_grey"/>
+      <material name="matte_black"/>
     </visual>
-    <collision>
-      <geometry>
-        <box size="0.26 0.18 0.07"/>
-      </geometry>
-    </collision>
-    <inertial>
-      <mass value="1.35"/>
-      <inertia ixx="0.0042" ixy="0" ixz="0" iyy="0.0081" iyz="0" izz="0.0112"/>
-    </inertial>
   </link>
 
-  <!-- ================= 5-DOF ROBOTIC ARM ================= -->
-  
-  <!-- CH 0: Base Turntable Swivel (Height: 50mm) -->
-  <joint name="ch0_base_swivel" type="revolute">
-    <parent link="base_chassis"/>
-    <child link="arm_base_link"/>
-    <origin xyz="0.05 0 0.035" rpy="0 0 0"/> <!-- Mounted slightly forward on chassis -->
-    <axis xyz="0 0 1"/> <!-- Rotates around Z-axis -->
-    <limit lower="0" upper="3.14159" effort="1.2" velocity="3.14"/>
+  <!-- Battery Cradle Proxy (Center Mass) -->
+  <joint name="battery_joint" type="fixed">
+    <parent link="lower_deck"/>
+    <child link="battery"/>
+    <origin xyz="-0.02 0 0.015" rpy="0 0 0"/>
   </joint>
-
-  <link name="arm_base_link">
+  <link name="battery">
     <visual>
-      <origin xyz="0 0 0.025" rpy="0 0 0"/>
-      <geometry>
-        <cylinder radius="0.03" length="0.05"/>
-      </geometry>
-      <material name="arm_cyan"/>
+      <geometry> <box size="0.11 0.04 0.025"/> </geometry>
+      <material name="power_red"/>
     </visual>
-    <inertial>
-      <mass value="0.25"/>
-      <inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0001" iyz="0" izz="0.0001"/>
-    </inertial>
   </link>
 
-  <!-- CH 1: Shoulder Joint (Length: 120mm) -->
-  <joint name="ch1_shoulder" type="revolute">
-    <parent link="arm_base_link"/>
-    <child link="shoulder_link"/>
-    <origin xyz="0 0 0.05" rpy="0 0 0"/>
-    <axis xyz="0 1 0"/> <!-- Rotates around Y-axis (Pitch) -->
-    <limit lower="0" upper="3.14159" effort="1.2" velocity="3.14"/>
+  <!-- ================= WHEELS ================= -->
+  <!-- Left Wheel -->
+  <joint name="left_wheel_joint" type="continuous">
+    <parent link="lower_deck"/>
+    <child link="left_wheel"/>
+    <origin xyz="-0.05 0.105 0" rpy="1.5708 0 0"/>
+    <axis xyz="0 0 1"/>
   </joint>
-
-  <link name="shoulder_link">
+  <link name="left_wheel">
     <visual>
-      <origin xyz="0 0 0.06" rpy="0 0 0"/>
-      <geometry>
-        <box size="0.03 0.03 0.12"/>
-      </geometry>
-      <material name="arm_cyan"/>
+      <geometry> <cylinder radius="0.0325" length="0.026"/> </geometry>
+      <material name="rubber_dark"/>
     </visual>
-    <inertial>
-      <mass value="0.18"/>
-      <inertia ixx="0.0002" ixy="0" ixz="0" iyy="0.0002" iyz="0" izz="0.00005"/>
-    </inertial>
   </link>
 
-  <!-- CH 2: Elbow Joint (Length: 110mm) -->
-  <joint name="ch2_elbow" type="revolute">
-    <parent link="shoulder_link"/>
-    <child link="elbow_link"/>
-    <origin xyz="0 0 0.12" rpy="0 0 0"/>
-    <axis xyz="0 1 0"/>
-    <limit lower="0" upper="3.14159" effort="1.2" velocity="3.14"/>
+  <!-- Right Wheel -->
+  <joint name="right_wheel_joint" type="continuous">
+    <parent link="lower_deck"/>
+    <child link="right_wheel"/>
+    <origin xyz="-0.05 -0.105 0" rpy="1.5708 0 0"/>
+    <axis xyz="0 0 1"/>
   </joint>
-
-  <link name="elbow_link">
+  <link name="right_wheel">
     <visual>
-      <origin xyz="0 0 0.055" rpy="0 0 0"/>
-      <geometry>
-        <box size="0.025 0.025 0.11"/>
-      </geometry>
-      <material name="arm_cyan"/>
+      <geometry> <cylinder radius="0.0325" length="0.026"/> </geometry>
+      <material name="rubber_dark"/>
     </visual>
-    <inertial>
-      <mass value="0.15"/>
-      <inertia ixx="0.00015" ixy="0" ixz="0" iyy="0.00015" iyz="0" izz="0.00003"/>
-    </inertial>
   </link>
 
-  <!-- CH 3: Wrist Pitch (Length: 70mm) -->
-  <joint name="ch3_wrist" type="revolute">
-    <parent link="elbow_link"/>
-    <child link="wrist_link"/>
-    <origin xyz="0 0 0.11" rpy="0 0 0"/>
-    <axis xyz="0 1 0"/>
-    <limit lower="0" upper="3.14159" effort="1.0" velocity="3.14"/>
+  <!-- Front Caster Wheel (Stability) -->
+  <joint name="caster_joint" type="fixed">
+    <parent link="lower_deck"/>
+    <child link="caster_wheel"/>
+    <origin xyz="0.10 0 -0.015" rpy="0 0 0"/>
   </joint>
-
-  <link name="wrist_link">
+  <link name="caster_wheel">
     <visual>
-      <origin xyz="0 0 0.035" rpy="0 0 0"/>
-      <geometry>
-        <box size="0.02 0.02 0.07"/>
-      </geometry>
-      <material name="arm_cyan"/>
+      <geometry> <sphere radius="0.015"/> </geometry>
+      <material name="neon_cyan"/>
     </visual>
-    <inertial>
-      <mass value="0.10"/>
-      <inertia ixx="0.00005" ixy="0" ixz="0" iyy="0.00005" iyz="0" izz="0.00001"/>
-    </inertial>
   </link>
 
-  <!-- CH 4: Gripper Tool Center Point (Reach: 85mm) -->
-  <joint name="ch4_gripper" type="revolute">
-    <parent link="wrist_link"/>
-    <child link="gripper_link"/>
-    <origin xyz="0 0 0.07" rpy="0 0 0"/>
-    <axis xyz="1 0 0"/> <!-- Roll or clamping axis depending on gripper design -->
-    <limit lower="0" upper="3.14159" effort="0.8" velocity="3.14"/>
+  <!-- ================= UPPER DECK (NEURAL LOGIC) ================= -->
+  <joint name="deck_spacer" type="fixed">
+    <parent link="lower_deck"/>
+    <child link="upper_deck"/>
+    <origin xyz="0 0 0.04" rpy="0 0 0"/> <!-- 40mm gap for wiring and battery -->
   </joint>
-
-  <link name="gripper_link">
+  <link name="upper_deck">
     <visual>
-      <origin xyz="0 0 0.0425" rpy="0 0 0"/>
-      <geometry>
-        <box size="0.05 0.03 0.085"/>
-      </geometry>
-      <material name="arm_cyan"/>
+      <geometry> <box size="0.26 0.18 0.005"/> </geometry>
+      <material name="matte_black"/>
     </visual>
-    <inertial>
-      <mass value="0.12"/>
-      <inertia ixx="0.00008" ixy="0" ixz="0" iyy="0.00008" iyz="0" izz="0.00002"/>
-    </inertial>
+  </link>
+
+  <!-- Raspberry Pi 5 Proxy -->
+  <joint name="rpi_joint" type="fixed">
+    <parent link="upper_deck"/>
+    <child link="raspberry_pi"/>
+    <origin xyz="-0.06 -0.045 0.01" rpy="0 0 0"/>
+  </joint>
+  <link name="raspberry_pi">
+    <visual>
+      <geometry> <box size="0.085 0.056 0.015"/> </geometry>
+      <material name="pcb_green"/>
+    </visual>
+  </link>
+
+  <!-- ESP32 NodeMCU Proxy -->
+  <joint name="esp_joint" type="fixed">
+    <parent link="upper_deck"/>
+    <child link="esp32"/>
+    <origin xyz="-0.08 0.04 0.01" rpy="0 0 0"/>
+  </joint>
+  <link name="esp32">
+    <visual>
+      <geometry> <box size="0.052 0.028 0.01"/> </geometry>
+      <material name="matte_black"/>
+    </visual>
+  </link>
+
+  <!-- PCA9685 Servo Driver Proxy -->
+  <joint name="pca_joint" type="fixed">
+    <parent link="upper_deck"/>
+    <child link="pca9685"/>
+    <origin xyz="0.02 0 0.01" rpy="0 0 0"/>
+  </joint>
+  <link name="pca9685">
+    <visual>
+      <geometry> <box size="0.062 0.025 0.01"/> </geometry>
+      <material name="neon_cyan"/>
+    </visual>
+  </link>
+
+  <!-- ================= SENSORY ARRAY (FRONT) ================= -->
+  <!-- Ultrasonic Radar Mount -->
+  <joint name="sonar_joint" type="fixed">
+    <parent link="lower_deck"/>
+    <child link="ultrasonic"/>
+    <origin xyz="0.13 0 0.02" rpy="0 0 0"/>
+  </joint>
+  <link name="ultrasonic">
+    <visual>
+      <geometry> <box size="0.01 0.045 0.02"/> </geometry>
+      <material name="neon_cyan"/>
+    </visual>
+  </link>
+
+  <!-- Pi Camera Tilted Mount -->
+  <joint name="camera_joint" type="fixed">
+    <parent link="upper_deck"/>
+    <child link="pi_camera"/>
+    <origin xyz="0.12 0 0.025" rpy="0 0.261 0"/> <!-- Tilted down ~15 degrees -->
+  </joint>
+  <link name="pi_camera">
+    <visual>
+      <geometry> <box size="0.01 0.025 0.025"/> </geometry>
+      <material name="matte_black"/>
+    </visual>
   </link>
 
 </robot>
