@@ -1,20 +1,152 @@
-from adafruit_pca9685 import PCA9685
-from board import SCL, SDA
-import busio
-import time
+<?xml version="1.0" ?>
+<robot name="cognitive_rover_arm">
 
-i2c = busio.I2C(SCL, SDA)
-pca = PCA9685(i2c)
-pca.frequency = 50
+  <!-- ================= MATERIALS ================= -->
+  <material name="chassis_grey">
+    <color rgba="0.2 0.2 0.25 1.0"/>
+  </material>
+  <material name="arm_cyan">
+    <color rgba="0.0 1.0 0.8 1.0"/>
+  </material>
+  <material name="wheel_black">
+    <color rgba="0.05 0.05 0.05 1.0"/>
+  </material>
 
-def set_servo_angle(channel, angle):
-    pulse = int((angle / 180.0) * 4000 + 1000)
-    pca.channels[channel].duty_cycle = pulse
+  <!-- ================= MOBILE BASE ================= -->
+  <!-- Main Chassis (260mm x 180mm x 70mm, 1.35 kg) -->
+  <link name="base_chassis">
+    <visual>
+      <geometry>
+        <box size="0.26 0.18 0.07"/>
+      </geometry>
+      <material name="chassis_grey"/>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="0.26 0.18 0.07"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="1.35"/>
+      <inertia ixx="0.0042" ixy="0" ixz="0" iyy="0.0081" iyz="0" izz="0.0112"/>
+    </inertial>
+  </link>
 
-while True:
-    set_servo_angle(0, 0)
-    time.sleep(1)
-    set_servo_angle(0, 90)
-    time.sleep(1)
-    set_servo_angle(0, 180)
-    time.sleep(1)
+  <!-- ================= 5-DOF ROBOTIC ARM ================= -->
+  
+  <!-- CH 0: Base Turntable Swivel (Height: 50mm) -->
+  <joint name="ch0_base_swivel" type="revolute">
+    <parent link="base_chassis"/>
+    <child link="arm_base_link"/>
+    <origin xyz="0.05 0 0.035" rpy="0 0 0"/> <!-- Mounted slightly forward on chassis -->
+    <axis xyz="0 0 1"/> <!-- Rotates around Z-axis -->
+    <limit lower="0" upper="3.14159" effort="1.2" velocity="3.14"/>
+  </joint>
+
+  <link name="arm_base_link">
+    <visual>
+      <origin xyz="0 0 0.025" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.03" length="0.05"/>
+      </geometry>
+      <material name="arm_cyan"/>
+    </visual>
+    <inertial>
+      <mass value="0.25"/>
+      <inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0001" iyz="0" izz="0.0001"/>
+    </inertial>
+  </link>
+
+  <!-- CH 1: Shoulder Joint (Length: 120mm) -->
+  <joint name="ch1_shoulder" type="revolute">
+    <parent link="arm_base_link"/>
+    <child link="shoulder_link"/>
+    <origin xyz="0 0 0.05" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/> <!-- Rotates around Y-axis (Pitch) -->
+    <limit lower="0" upper="3.14159" effort="1.2" velocity="3.14"/>
+  </joint>
+
+  <link name="shoulder_link">
+    <visual>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.03 0.03 0.12"/>
+      </geometry>
+      <material name="arm_cyan"/>
+    </visual>
+    <inertial>
+      <mass value="0.18"/>
+      <inertia ixx="0.0002" ixy="0" ixz="0" iyy="0.0002" iyz="0" izz="0.00005"/>
+    </inertial>
+  </link>
+
+  <!-- CH 2: Elbow Joint (Length: 110mm) -->
+  <joint name="ch2_elbow" type="revolute">
+    <parent link="shoulder_link"/>
+    <child link="elbow_link"/>
+    <origin xyz="0 0 0.12" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="0" upper="3.14159" effort="1.2" velocity="3.14"/>
+  </joint>
+
+  <link name="elbow_link">
+    <visual>
+      <origin xyz="0 0 0.055" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.025 0.025 0.11"/>
+      </geometry>
+      <material name="arm_cyan"/>
+    </visual>
+    <inertial>
+      <mass value="0.15"/>
+      <inertia ixx="0.00015" ixy="0" ixz="0" iyy="0.00015" iyz="0" izz="0.00003"/>
+    </inertial>
+  </link>
+
+  <!-- CH 3: Wrist Pitch (Length: 70mm) -->
+  <joint name="ch3_wrist" type="revolute">
+    <parent link="elbow_link"/>
+    <child link="wrist_link"/>
+    <origin xyz="0 0 0.11" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="0" upper="3.14159" effort="1.0" velocity="3.14"/>
+  </joint>
+
+  <link name="wrist_link">
+    <visual>
+      <origin xyz="0 0 0.035" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.02 0.02 0.07"/>
+      </geometry>
+      <material name="arm_cyan"/>
+    </visual>
+    <inertial>
+      <mass value="0.10"/>
+      <inertia ixx="0.00005" ixy="0" ixz="0" iyy="0.00005" iyz="0" izz="0.00001"/>
+    </inertial>
+  </link>
+
+  <!-- CH 4: Gripper Tool Center Point (Reach: 85mm) -->
+  <joint name="ch4_gripper" type="revolute">
+    <parent link="wrist_link"/>
+    <child link="gripper_link"/>
+    <origin xyz="0 0 0.07" rpy="0 0 0"/>
+    <axis xyz="1 0 0"/> <!-- Roll or clamping axis depending on gripper design -->
+    <limit lower="0" upper="3.14159" effort="0.8" velocity="3.14"/>
+  </joint>
+
+  <link name="gripper_link">
+    <visual>
+      <origin xyz="0 0 0.0425" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.05 0.03 0.085"/>
+      </geometry>
+      <material name="arm_cyan"/>
+    </visual>
+    <inertial>
+      <mass value="0.12"/>
+      <inertia ixx="0.00008" ixy="0" ixz="0" iyy="0.00008" iyz="0" izz="0.00002"/>
+    </inertial>
+  </link>
+
+</robot>
